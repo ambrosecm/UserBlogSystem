@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.upc.oa.mapper.CcommentMapper">
+    <delete id="delelteCcomente" parameterType="com.upc.oa.po.Ccomment">
+        delete from ccomment
+        where ccid =#{ccid}
+    </delete>
+    <resultMap id="CcommentMap" type="com.upc.oa.po.Ccomment">
+        <id property="ccid" column="ccid"></id>
+        <result property="cctime" column="cctime"></result>
+        <result property="ccpraise" column="ccpraise"></result>
+        <result property="ccwriterId" column="ccwriterId"></result>
+        <result property="ccBlogId" column="ccBlogId"></result>
+        <result property="cctext" column="cctext"></result>
+        <association property="user" javaType="com.upc.oa.po.User">
+            <id property="uid" column="uid"></id>
+            <result property="userName" column="userName"></result>
+        </association>
+        <association property="blog" javaType="com.upc.oa.po.Blog">
+            <id property="bid" column="bid"></id>
+            <result property="btitle" column="btitle"></result>
+        </association>
+    </resultMap>
+    <select id="findAllCcomentes" resultMap="CcommentMap"
+        parameterType="com.upc.oa.po.Ccomment">
+        select cc.*,u.userName,u.uid,b.bid,b.btitle
+        from user u,ccomment cc,blog b
+        where cc.ccwriterId=u.uid
+        and cc.ccBlogId=b.bid
+        <if test ="cctext!= null and cctext != ''">
+            and cctext like concat('%',#{cctext},'%')
+        </if>
+    </select>
+</mapper>

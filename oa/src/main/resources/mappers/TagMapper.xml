@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.upc.oa.mapper.TagMapper">
+    <insert id="addTag" parameterType="com.upc.oa.po.Tag">
+        insert into tag(tname) values (#{tname})
+    </insert>
+    <update id="updateTag" parameterType="com.upc.oa.po.Tag">
+        update  tag
+        set  tname=#{tname}
+        where tid=#{tid}
+    </update>
+    <delete id="deleteTag" parameterType="com.upc.oa.po.Tag">
+        delete from tag where tid=#{tid}
+    </delete>
+
+    <select id="findAllTags" resultType="com.upc.oa.po.Tag">
+        select * from tag
+        <if test="tid != null and tid != ''">
+            where tid like concat('%',#{tid},'%')
+        </if>
+    </select>
+</mapper>

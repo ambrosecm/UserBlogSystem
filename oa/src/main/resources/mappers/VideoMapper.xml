@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.upc.oa.mapper.VideoMapper">
+
+    <resultMap id="videoMap" type="com.upc.oa.po.Video">
+        <id column="vid" property="vid"></id>
+        <result property="vtitle" column="vtitle"></result>
+        <result property="vtypeId" column="vtypeId"></result>
+        <result property="vdescription" column="vdescription"></result>
+        <result property="vsrc" column="vsrc"></result>
+        <result property="vtime" column="vtime"></result>
+        <result property="vteacher" column="vteacher"></result>
+        <result property="vlong" column="vlong"></result>
+        <result property="voutline" column="voutline"></result>
+        <result property="vplayNum" column="vplayNum"></result>
+        <result property="vpraise" column="vpraise"></result>
+        <result property="vprice" column="vprice"></result>
+
+        <association property="type" javaType="com.upc.oa.po.Type">
+            <id property="typeId" column="typeId"></id>
+            <result property="typeName" column="typeName"></result>
+        </association>
+
+    </resultMap>
+
+    <insert id="saveCol" parameterType="com.upc.oa.po.Collectvideo">
+        insert into collectvideo values (#{uid},#{vid})
+    </insert>
+
+    <insert id="addVideo" parameterType="com.upc.oa.po.Video">
+        insert into video(vtitle, vtypeId, vdescription, vsrc, vtime, vteacher, vlong, voutline, vprice)
+values (#{vtitle},#{vtypeId},#{vdescription},#{vsrc},#{vtime},#{vteacher},#{vlong},#{voutline},#{vprice})
+    </insert>
+
+    <delete id="deleteVideo" parameterType="com.upc.oa.po.Video">
+        delete from video
+        where vid=#{vid}
+    </delete>
+
+
+    <insert id="addNote" parameterType="com.upc.oa.po.Vnote">
+        insert into vnote values (#{uid},#{vid},#{note})
+    </insert>
+
+    <insert id="sendVcomment" parameterType="com.upc.oa.dto.VcommentDto" useGeneratedKeys="true" keyProperty="vcid">
+            <choose>
+                <when test="vcparentId!=null and vcparentId!=''">
+                    insert into vcomment(vctime, vcpraise, vcwriterId, vcVideoId, vctext, vcparentId)
+                    values (now(),0,#{vcwriterId},#{vid},#{vctext},#{vcparentId})
+                </when>
+                <otherwise>
+                    insert into vcomment(vctime, vcpraise, vcwriterId, vcVideoId, vctext)
+                    values (now(),0,#{uid},#{vid},#{vctext})
+                </otherwise>
+            </choose>
+    </insert>
+
+    <delete id="delCol" parameterType="com.upc.oa.po.Collectvideo">
+        delete from collectvideo
+        where uid=#{uid} and vid=#{vid}
+    </delete>
+
+    <select id="findVideoByParam" resultMap="videoMap"
+            parameterType="com.upc.oa.dto.VideoDto">
+        select * from video,type
+        <where>
+            video.vtypeId = type.typeId
+            <if test="typeName!=null and typeName!=''">
+                and typeName>=#{typeName}
+            </if>
+
+            <if test="vtitle!=null and vtitle!=''">
+                and vtitle like '%${vtitle}%'
+            </if>
+
+        </where>
+    </select>
+    <select id="findAllVideos" resultType="com.upc.oa.po.Video">
+        select *
+        from video
+        <if test ="vtitle!= null and vtitle != ''">
+            where vtitle like concat('%',${vtitle},'%')
+        </if>
+    </select>
+    <select id="findAllType" resultType="com.upc.oa.po.Type">
+        select *
+        from type
+    </select>
+    <select id="findVideoById" resultType="com.upc.oa.po.Video">
+        select *
+        from video
+        where vid=#{vid}
+    </select>
+
+    <select id="findColVideoNum" resultType="java.lang.Integer">
+        select count(*) colNum
+        from collectvideo
+        where vid=#{vid}
+    </select>
+    <select id="findCOl" resultType="com.upc.oa.po.Collectvideo" parameterType="com.upc.oa.po.Collectvideo">
+        select * from collectvideo
+        where uid=#{uid} and vid=#{vid}
+    </select>
+    <select id="findNote" resultType="com.upc.oa.po.Vnote" parameterType="com.upc.oa.po.Vnote">
+        select * from vnote
+        where uid=#{uid} and vid=#{vid}
+    </select>
+
+    <resultMap id="videoctMap" type="com.upc.oa.po.Vcomment">
+        <result property="vcid" column="vcid"/>
+        <result property="vctime" column="vctime"/>
+        <result property="vcpraise" column="vcpraise"/>
+        <result property="vctext" column="vctext"/>
+        <association property="user" javaType="com.upc.oa.po.User">
+            <id property="uid" column="uid" />
+            <result property="userName" column="userName"/>
+        </association>
+        <association property="video" javaType="com.upc.oa.po.Video">
+            <id property="vid" column="vid"></id>
+        </association>
+        <collection property="childVcomments" ofType="com.upc.oa.po.Vcomment" column="vcid" select="findChildCt"></collection>
+    </resultMap>
+    <select id="findCtById" parameterType="com.upc.oa.po.Video" resultMap="videoctMap">
+        select
+        vcid, vctime, vcpraise, vctext, vcparentId,user.uid,user.userName,video.vid
+        from vcomment c,video,user
+        where c.vcVideoId=video.vid and c.vcwriterId=user.uid  and video.vid=#{vid} and vcparentId is null
+    </select>
+    <select id="findChildCt" resultMap="videoctMap" >
+        select
+        vcid, vctime, vcpraise, vctext, vcparentId,user.uid,user.userName,video.vid
+        from vcomment,video,user
+        where vcomment.vcVideoId=video.vid and vcomment.vcwriterId=user.uid  and vcparentId=#{vcid}
+    </select>
+
+    <update id="updateVplayNum">
+        update video
+        set vplayNum = vplayNum+1
+        where vid = #{vid}
+    </update>
+
+
+    <update id="addPraise">
+        update video
+        set vpraise = vpraise+1
+        where vid=#{vid}
+    </update>
+
+    <update id="subPraise">
+        update video
+        set vpraise = vpraise-1
+        where vid=#{vid}
+    </update>
+    <update id="updateNote" parameterType="com.upc.oa.po.Vnote">
+        update vnote
+        set note = #{note}
+        where uid = #{uid} and vid = #{vid}
+    </update>
+
+    <update id="updateVideo" parameterType="com.upc.oa.po.Video">
+     update video set
+        vsrc=#{vsrc},vtitle=#{vtitle},vtypeId=#{vtypeId},vdescription=#{vdescription}
+    ,vteacher=#{vteacher},vlong=#{vlong},voutline=#{voutline},vprice=#{vprice}
+        where vid=#{vid}
+    </update>
+    <update id="praiseVcomment" parameterType="com.upc.oa.dto.VcommentDto">
+        update vcomment
+        set vcpraise=vcpraise+1
+        where vcid=#{vcid}
+    </update>
+</mapper>
+
+
+
+

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.upc.oa.mapper.BlogMapper">
+    <update id="updateBlog" parameterType="com.upc.oa.po.Blog">
+        update blog set
+        btitle=#{btitle},btext=#{btext},btime=#{btime}
+        where bid=#{bid}
+    </update>
+
+    <delete id="deleteBlog" parameterType="com.upc.oa.po.Blog">
+        delete from blog where bid=#{bid}
+    </delete>
+
+    <resultMap id="blogMap" type="com.upc.oa.po.Blog">
+        <id column="bid" property="bid"></id>
+        <result property="btitle" column="btitle"></result>
+        <result property="btext" column="btext"></result>
+        <result property="btime" column="btime"></result>
+        <result property="bviewNum" column="bviewNum"></result>
+        <result property="bpraise" column="bpraise"></result>
+        <result property="bwriter" column="bwriter"></result>
+        <association property="user" javaType="com.upc.oa.po.User">
+            <id property="uid" column="uid"></id>
+            <result property="userName" column="userName"></result>
+        </association>
+        <association property="btag" javaType="com.upc.oa.po.Btag">
+            <id property="bid" column="bid"></id>
+            <result property="tid" column="tid"></result>
+        </association>
+        <association property="tag" javaType="com.upc.oa.po.Tag">
+            <id property="tid" column="tid"></id>
+            <result property="tname" column="tname"></result>
+        </association>
+    </resultMap>
+    <select id="findAllBlogs" resultMap="blogMap" parameterType="com.upc.oa.po.Blog">
+        select
+            bl.*,u.userName,bt.tid,t.tname
+        from user u,blog bl,btag bt,tag t
+        where bl.bwriter=u.uid and bl.bid=bt.bid and bt.tid=t.tid
+        <if test="btitle != null and btitle != ''">
+            and bl.btitle like concat('%',#{btitle},'%')
+        </if>
+    </select>
+
+
+    <insert id="uploadBlog" parameterType="com.upc.oa.dto.BlogDto" useGeneratedKeys="true" keyProperty="bid">
+        insert into blog(btitle, bwriter, btext, btime,bviewNum,bpraise)
+        values (#{btitle},#{bwriter},#{btext},now(),0,0)
+    </insert>
+
+    <insert id="uploadBlogTag" parameterType="com.upc.oa.dto.BtagDto">
+        insert into btag(bid, tid) VALUES (#{bid},#{tid})
+    </insert>
+
+    <insert id="sendCcomment" parameterType="com.upc.oa.dto.CcommentDto" useGeneratedKeys="true" keyProperty="ccid">
+        <choose>
+            <when test="ccparentId!=null and ccparentId!=''">
+                insert into ccomment(cctime, ccpraise, ccwriterId, ccBlogId, cctext, ccparentId)
+                values (now(),0,#{ccwriterId},#{bid},#{cctext},#{ccparentId})
+            </when>
+            <otherwise>
+                insert into ccomment(cctime, ccpraise, ccwriterId, ccBlogId, cctext)
+                values (now(),0,#{uid},#{bid},#{cctext})
+            </otherwise>
+        </choose>
+    </insert>
+
+    <update id="editBlog" parameterType="com.upc.oa.dto.BlogDto">
+        update blog
+        set btitle=#{btitle},btext=#{btext}
+        where bid=#{bid}
+    </update>
+
+    <update id="viewBlog" parameterType="com.upc.oa.dto.BlogDto">
+        update blog
+        set bviewNum=bviewNum+1
+        where bid=#{bid}
+    </update>
+
+    <update id="praiseBlog" parameterType="com.upc.oa.dto.BlogDto">
+        update blog
+        set bpraise=bpraise+1
+        where bid=#{bid}
+    </update>
+
+    <update id="praiseCcomment" parameterType="com.upc.oa.dto.CcommentDto">
+        update ccomment
+        set ccpraise=ccpraise+1
+        where ccid=#{ccid}
+    </update>
+
+    <delete id="deleteBlogTag" parameterType="com.upc.oa.dto.BtagDto">
+        delete from btag
+        where bid=#{bid}
+    </delete>
+
+    <select id="findAllTag" resultType="com.upc.oa.po.Tag">
+        select
+        *
+        from tag
+    </select>
+
+    <resultMap id="blogMapper" type="com.upc.oa.po.Blog">
+        <id property="bid" column="bid" />
+        <result property="btitle" column="btitle" />
+        <result property="btext" column="btext"/>
+        <result property="btime" column="btime"/>
+        <result property="bviewNum" column="bviewNum"/>
+        <result property="bpraise" column="bpraise"/>
+        <association property="user" javaType="com.upc.oa.po.User">
+            <id property="uid" column="uid" />
+            <result property="userName" column="userName"/>
+        </association>
+        <collection property="blogtags"  ofType="com.upc.oa.po.Tag" column="bid" select="findTagById"></collection>
+    </resultMap>
+    <select id="findBlogByParam" resultMap="blogMapper"
+        parameterType="String">
+        select
+        bid, btitle, btext, btime, bviewNum, bpraise, uid, userName
+        from blog,user
+        where blog.bwriter=user.uid
+        <if test="searchParam !=null and searchParam!= ''">
+            and (btitle like concat('%',#{searchParam},'%')
+            or userName like concat('%',#{searchParam},'%'))
+        </if>
+    </select>
+
+    <select id="findTagById" resultType="com.upc.oa.po.Tag">
+        select
+        tag.tid,tname
+        from blog,tag,btag
+        where btag.tid=tag.tid and btag.bid=blog.bid
+        and blog.bid=#{bid}
+    </select>
+
+    <resultMap id="tagMapper" type="com.upc.oa.po.Blog">
+        <id property="bid" column="bid" />
+        <result property="btitle" column="btitle" />
+        <result property="btext" column="btext"/>
+        <result property="btime" column="btime"/>
+        <result property="bviewNum" column="bviewNum"/>
+        <result property="bpraise" column="bpraise"/>
+        <association property="user" javaType="com.upc.oa.po.User">
+            <id property="uid" column="uid" />
+            <result property="userName" column="userName"/>
+        </association>
+        <association property="tag" javaType="com.upc.oa.po.Tag">
+            <id property="tid" column="tid" />
+            <result property="tname" column="tname"/>
+        </association>
+        <collection property="blogtags"  ofType="com.upc.oa.po.Tag" column="bid" select="findTagById"></collection>
+    </resultMap>
+    <select id="findBlogByTag" resultMap="tagMapper" parameterType="com.upc.oa.dto.TagDto">
+        select
+        blog.bid, btitle,  btext, btime, bviewNum, bpraise, tag.tid, tname, uid, userName
+        from blog,btag,tag,user
+        where blog.bwriter=user.uid and blog.bid=btag.bid and btag.tid=tag.tid and tag.tid=#{tid}
+    </select>
+
+    <resultMap id="blogInfoMapper" type="com.upc.oa.po.Blog">
+        <id property="bid" column="bid" />
+        <result property="btitle" column="btitle" />
+        <result property="btext" column="btext"/>
+        <result property="btime" column="btime"/>
+        <result property="bviewNum" column="bviewNum"/>
+        <result property="bpraise" column="bpraise"/>
+        <association property="user" javaType="com.upc.oa.po.User">
+            <id property="uid" column="uid" />
+            <result property="userName" column="userName"/>
+        </association>
+        <collection property="blogtags"  ofType="com.upc.oa.po.Tag" column="bid" select="findTagById"></collection>
+    </resultMap>
+    <select id="findById" resultMap="blogInfoMapper" parameterType="com.upc.oa.dto.BlogDto">
+        select
+        bid, btitle,  btext, btime, bviewNum, bpraise, uid, userName
+        from blog,user
+        where blog.bwriter=user.uid and blog.bwriter=user.uid and bid=#{bid}
+    </select>
+
+
+    <resultMap id="findCtByIdMapper" type="com.upc.oa.po.Ccomment">
+        <result property="ccid" column="ccid"/>
+        <result property="cctime" column="cctime"/>
+        <result property="ccpraise" column="ccpraise"/>
+        <result property="cctext" column="cctext"/>
+        <association property="user" javaType="com.upc.oa.po.User">
+            <id property="uid" column="uid" />
+            <result property="userName" column="userName"/>
+        </association>
+        <association property="blog" javaType="com.upc.oa.po.Blog">
+            <id property="bid" column="bid"></id>
+        </association>
+        <collection property="childCcomments" ofType="com.upc.oa.po.Ccomment" column="ccid" select="findChildCt"></collection>
+    </resultMap>
+    <select id="findCtById" resultMap="findCtByIdMapper" parameterType="com.upc.oa.dto.BlogDto">
+        select
+        ccid, cctime, ccpraise, cctext, ccparentId,user.uid,user.userName,blog.bid
+        from ccomment c,blog,user
+        where c.ccBlogId=blog.bid and c.ccwriterId=user.uid  and blog.bid=#{bid} and ccparentId is null
+    </select>
+    <select id="findChildCt" resultMap="findCtByIdMapper" >
+        select
+        ccid, cctime, ccpraise, cctext, ccparentId,user.uid,user.userName,blog.bid
+        from ccomment ,blog,user
+        where ccomment.ccBlogId=blog.bid and ccomment.ccwriterId=user.uid  and ccparentId=#{ccid}
+    </select>
+
+</mapper>

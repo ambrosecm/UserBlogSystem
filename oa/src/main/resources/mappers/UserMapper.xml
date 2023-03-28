@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.upc.oa.mapper.UserMapper">
+
+<!--    <resultMap id="videoMap" type="com.upc.oa.po.Video">-->
+<!--        <id column="vid" property="vid"></id>-->
+<!--        <result column="vtitle" property="vtitle"></result>-->
+<!--        <result property="vtypeId" column="vtypeId"></result>-->
+<!--        <result property="vdescription" column="vdescription"></result>-->
+<!--        <result property="vlong" column="vlong"></result>-->
+<!--        <result property="voutline" column="voutline"></result>-->
+<!--        <result property="vsrc" column="vsrc"></result>-->
+<!--        <result property="vprice" column="vprice"></result>-->
+<!--        <result property="vtime" column="vtime"></result>-->
+<!--        <result property="vteacher" column="vteacher"></result>-->
+<!--        <result property="vplayNum" column="vplayNum"></result>-->
+<!--        <association property="vid"-->
+<!--                     javaType="com.upc.oa.po.Collectvideo">-->
+<!--            <id property="vid" column="vid"></id>-->
+<!--            <result property="uid" column="uid"></result>-->
+<!--        </association>-->
+<!--    </resultMap>-->
+
+<!--    <resultMap id="videobuyMap" type="com.upc.oa.po.Video">-->
+<!--        <id column="vid" property="vid"></id>-->
+<!--        <result column="vtitle" property="vtitle"></result>-->
+<!--        <result property="vtypeId" column="vtypeId"></result>-->
+<!--        <result property="vdescription" column="vdescription"></result>-->
+<!--        <result property="vlong" column="vlong"></result>-->
+<!--        <result property="voutline" column="voutline"></result>-->
+<!--        <result property="vsrc" column="vsrc"></result>-->
+<!--        <result property="vprice" column="vprice"></result>-->
+<!--        <result property="vtime" column="vtime"></result>-->
+<!--        <result property="vteacher" column="vteacher"></result>-->
+<!--        <result property="vplayNum" column="vplayNum"></result>-->
+<!--        <association property="vid"-->
+<!--                     javaType="com.upc.oa.po.Myvideo">-->
+<!--            <id property="vid" column="vid"></id>-->
+<!--            <result property="uid" column="uid"></result>-->
+<!--        </association>-->
+<!--    </resultMap>-->
+
+    <resultMap id="CcommentMap" type="com.upc.oa.po.Ccomment">
+        <id property="ccid" column="ccid"></id>
+        <result property="cctime" column="cctime"></result>
+        <result property="ccpraise" column="ccpraise"></result>
+        <result property="ccwriterId" column="ccwriterId"></result>
+        <result property="ccBlogId" column="ccBlogId"></result>
+        <result property="cctext" column="cctext"></result>
+        <association property="user" javaType="com.upc.oa.po.User">
+            <id property="uid" column="uid"></id>
+            <result property="userName" column="userName"></result>
+        </association>
+        <association property="blog" javaType="com.upc.oa.po.Blog">
+            <id property="bid" column="bid"></id>
+            <result property="btitle" column="btitle"></result>
+        </association>
+    </resultMap>
+
+    <insert id="save" parameterType="com.upc.oa.dto.UserDto">
+        insert into user(userName, password, email, udate, phone, sex)
+        values (#{userName},md5(#{password}),#{email},curdate(),#{phone},#{sex})
+    </insert>
+
+    <update id="editSave" parameterType="com.upc.oa.dto.UserDto">
+        update user
+        set phone=#{phone},email=#{email},sex=#{sex},ubirth=#{ubirth},address=#{address}
+        where userName=#{userName}
+    </update>
+    <update id="editPwd" parameterType="string">
+        update user
+        set password=md5(#{npwd})
+        where userName=#{userName} and password=md5(#{opwd})
+    </update>
+    <update id="updateAvatar" parameterType="string">
+        update user
+        set upic=#{avatar_url}
+        where userName=#{userName}
+    </update>
+    <delete id="delUser">
+        delete
+        from user
+        where userName=#{userName} and password=md5(#{password})
+    </delete>
+    <insert id="addUser"  parameterType="com.upc.oa.dto.UserDto">
+    insert into user( userName, password,email, phone, sex, udate, address,ubirth)
+values
+(#{userName},#{password},#{email},#{phone},#{sex},#{udate},#{address},#{ubirth})
+    </insert>
+    <update id="updateUser" parameterType="com.upc.oa.dto.UserDto">
+        update user set
+        userName=#{userName},password=md5(#{password}),email=#{email},phone=#{phone}
+        ,sex=#{sex},ubirth=#{ubirth},address=#{address}
+        where uid=#{uid}
+    </update>
+    <update id="updatepassword" parameterType="com.upc.oa.dto.UserDto">
+        update user set
+        password=md5(#{password})
+        where userName=#{userName} and email=#{email}
+    </update>
+
+    <delete id="deleteUser" parameterType="com.upc.oa.dto.UserDto">
+            delete from user  where uid=#{uid}
+    </delete>
+    <delete id="deleteCc" parameterType="string" >
+        delete from ccomment
+        where ccid=#{ccid}
+    </delete>
+    <delete id="delCvideo" parameterType="string">
+        delete from collectvideo
+        where uid=#{uid}
+        and vid=#{vid}
+    </delete>
+
+    <select id="findAllUsers" resultType="com.upc.oa.po.User">
+        select * from user
+    </select>
+    <select id="login" resultType="com.upc.oa.po.User"
+            parameterType="com.upc.oa.dto.UserDto">
+        select
+        uid, userName, password, email, phone,sex
+        from user
+        where (userName=#{userName} or phone=#{userName})
+        and password=md5(#{password})
+    </select>
+    <select id="findByName" parameterType="String" resultType="java.lang.Integer">
+        select
+        count(*)
+        from user
+        where userName=#{name}
+    </select>
+
+    <select id="findName" resultType="com.upc.oa.po.User" parameterType="String">
+        select  upic, email, udate, phone, sex, ubirth, address, role,userName
+        from user
+        where userName=#{name}
+    </select>
+
+
+    <select id="findById" resultType="com.upc.oa.po.Video" parameterType="string">
+        select
+            v.*
+        from collectvideo c,video v
+        where c.vid=v.vid
+        <if test="uid!=null and uid !=''">
+            and c.uid=#{uid}
+        </if>
+    </select>
+
+    <select id="findByIdbuy" resultType="com.upc.oa.po.Video" parameterType="string">
+        select
+        v.*
+        from myvideo m,video v
+        where m.vid=v.vid
+        <if test="uid!=null and uid !=''">
+            and m.uid=#{uid}
+        </if>
+    </select>
+
+    <select id="findAllUsers2" resultType="com.upc.oa.po.User">
+        select * from user
+
+        <if test="userName != null and userName != ''">
+            where userName like concat('%',#{userName},'%')
+        </if>
+
+
+    </select>
+    <select id="findCc" resultMap="CcommentMap" parameterType="string">
+        select distinct
+        b.btitle, u.userName,c.cctext,c.cctime,c.ccpraise,c.ccid
+        from blog b, ccomment c,user u
+        where b.bid=c.ccBlogId
+        and c.ccwriterId = u.uid
+        and b.bwriter=#{uid}
+    </select>
+    <select id="findBlog" resultType="com.upc.oa.po.Blog" parameterType="string">
+        select
+        bid,btitle,btime,bviewNum,bpraise
+        from blog
+        where bwriter=#{uid}
+    </select>
+    <resultMap id="countAddress" type="com.upc.oa.dto.UserStaDto">
+        <result property="address" column="address"></result>
+        <result property="dnum" column="dnum"></result>
+    </resultMap>
+    <select id="countAddress" resultMap="countAddress">
+    select user.address,count(*) dnum
+    from user
+    group by user.address
+    </select>
+</mapper>
